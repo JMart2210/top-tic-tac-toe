@@ -31,3 +31,9 @@ button.right {
 button.bot {
   border-bottom: none;
 }
+h1 {
+  display: none;
+}
+.visible {
+  display: block;
+}
