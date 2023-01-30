@@ -31,9 +31,17 @@ button.right {
 button.bot {
   border-bottom: none;
 }
-h1 {
+.gameOverMsg{
   display: none;
 }
+
 .visible {
   display: block;
 }
+
+.winning {
+  text-shadow: yellow 0 0 40px;
+  font-size: 220px;
+}
+
+
