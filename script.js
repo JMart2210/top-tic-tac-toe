@@ -1,17 +1,17 @@
-/* eslint-disable no-underscore-dangle */
-
-const Player = (name, mark) => ({ name, mark });
+const Player = (name, mark) => {
+  const moves = [];
+  return { name, mark, moves };
+};
 
 const gamePlayModule = (function () {
   let gameBoard = ['0', '', '', '', '', '', '', '', '', ''];
-  let xValues = [];
-  let oValues = [];
   const playerOne = Player('Player One', 'X');
   const playerTwo = Player('Player Two', 'O');
   let winner = false;
   let turnNumber = 0;
   let turn = playerOne;
-  const cpuChoice = null;
+  let otherTurn = playerTwo;
+  let cpuChoice = null;
   const winningCombos = [
     [1, 2, 3],
     [1, 4, 7],
@@ -33,26 +33,34 @@ const gamePlayModule = (function () {
     }
   }
 
-  function gameOver(winningMark) {
-    DomElement.gameOverMsg.classList.add('visible');
+  function gameOver(winner) {
+    DomElement.gameOverContainer.classList.add('visible');
+    DomElement.mainDisplay.classList.add('blur');
+    if (winner == 'Draw') {
+      DomElement.gameOverMsg.textContent = "It's a draw!";
+      return;
+    }
+    DomElement.gameOverMsg.textContent = `${turn.name} wins!`;
     document.querySelector(`.btn${winner[0]}`).classList.add('winning');
     document.querySelector(`.btn${winner[1]}`).classList.add('winning');
     document.querySelector(`.btn${winner[2]}`).classList.add('winning');
   }
 
   function nextTurn() {
-    turn = (turn == playerOne) ? playerTwo : playerOne;
+    [turn, otherTurn] = [otherTurn, turn];
+    // turn = (turn == playerOne) ? playerTwo : playerOne;
     turnNumber += 1;
   }
 
   function clickAction(space) {
     const move = space.dataset.id;
     updateGameBoard(move, turn.mark);
-    if (checkForWinner()) return gameOver(turn.mark);
+    if (checkForWinner()) return gameOver(winner);
     nextTurn();
     if (playerTwo.name === 'cpu') {
-      updateGameBoard(getComputerChoice(), turn.mark);
-      if (checkForWinner()) gameOver(turn.mark);
+      cpuChoice = getComputerChoice();
+      updateGameBoard(cpuChoice, turn.mark);
+      if (checkForWinner()) gameOver(winner);
       nextTurn();
     }
     //   }
@@ -63,30 +71,26 @@ const gamePlayModule = (function () {
   }
 
   // this updates the game board array as well as the
-  // arrays that keep track of the moves for each side
+  // player moves for each side
   function updateGameBoard(move, mark) {
     gameBoard[move] = mark;
-    if (mark === 'X') xValues.push(+move);
-    else {
-      oValues.push(+move);
-    }
+    turn.moves.push(+move);
     gameBoardModule.updateDisplay(move, mark);
   }
 
   function getWinningCombos(movesSoFar) {
-    let winningCombosLeft = [...winningCombos];
+    const winningCombosLeft = [...winningCombos];
     for (let j = 0; j < movesSoFar.length; j++) {
-      for (let i = winningCombosLeft.length-1; i >= 0; i--) {
+      for (let i = winningCombosLeft.length - 1; i >= 0; i--) {
       // this creates an object where the key is the move option,
       // and the value is how many times it was present in the winning combos
-        if (movesSoFar[j] === winningCombosLeft[i][0] || 
-          movesSoFar[j] === winningCombosLeft[i][1] || 
-          movesSoFar[j] === winningCombosLeft[i][2]) {
+        if (movesSoFar[j] === winningCombosLeft[i][0]
+          || movesSoFar[j] === winningCombosLeft[i][1]
+          || movesSoFar[j] === winningCombosLeft[i][2]) {
           winningCombosLeft.splice(i, 1);
         }
       }
     }
-    console.table(winningCombosLeft);
     return winningCombosLeft;
   }
 
@@ -99,8 +103,8 @@ const gamePlayModule = (function () {
     let yourWinningMoves = {};
     let tempArrayW = [];
     let tempArrayL = [];
-    openSquares = openSquares.filter((val) => !oValues.includes(val));
-    openSquares = openSquares.filter((val) => !xValues.includes(val));
+    openSquares = openSquares.filter((val) => !playerTwo.moves.includes(val));
+    openSquares = openSquares.filter((val) => !playerOne.moves.includes(val));
 
     // function loops through the possible open moves, and
     // returns if 1)you have a winning move, 2) your opponent
@@ -108,23 +112,21 @@ const gamePlayModule = (function () {
     // best move based on the how useful the moves appear to be.
     for (i = 0; i < winningCombos.length; i++) {
       for (j = 0; j < openSquares.length; j++) {
-        if (turn.mark === 'X') {
-          tempArrayW = [...xValues];
-          tempArrayL = [...oValues];
+        if (turn === playerOne) {
+          tempArrayW = [...playerOne.moves];
+          tempArrayL = [...playerTwo.moves];
         } else {
-          tempArrayW = [...oValues];
-          tempArrayL = [...xValues];
+          tempArrayW = [...playerTwo.moves];
+          tempArrayL = [...playerOne.moves];
         }
         tempArrayW.push(openSquares[j]);
         tempArrayL.push(openSquares[j]);
         if (compareArray(tempArrayW, winningCombos[i])) {
-          let theWinningMove = tempArrayW[tempArrayW.length - 1];
-          console.log(`Winning Move: ${theWinningMove}`);
+          const theWinningMove = tempArrayW[tempArrayW.length - 1];
           return theWinningMove;
         }
         if (compareArray(tempArrayL, winningCombos[i])) {
           theLosingMove = tempArrayL[tempArrayL.length - 1];
-          console.log(`Losing Move: ${theLosingMove}`);
         }
       }
     }
@@ -134,32 +136,30 @@ const gamePlayModule = (function () {
     // the cpu to prevent the loss, instead of just making the winning move.
     if (theLosingMove) return theLosingMove;
 
-    if (turn.mark === 'X') {
-      opponentWinningMoves = getWinningCombos(xValues);
-      yourWinningMoves = getWinningCombos(oValues);
+    // if (turn.mark == 'X' && )
+    if (turn === playerOne) {
+      opponentWinningMoves = getWinningCombos(playerOne.moves);
+      yourWinningMoves = getWinningCombos(playerTwo.moves);
     } else {
-      opponentWinningMoves = getWinningCombos(oValues);
-      yourWinningMoves = getWinningCombos(xValues);
+      opponentWinningMoves = getWinningCombos(playerTwo.moves);
+      yourWinningMoves = getWinningCombos(playerOne.moves);
     }
-    for (let i = 0; i < winningCombos.length; i++) {
+    for (let i = 0; i < opponentWinningMoves.length; i++) {
       for (let j = 0; j < openSquares.length; j++) {
       // this loop creates an object that tells you which available space has the most
       // appearances in the opponent's winning combos (aka which ones would be good to block)
-        if (openSquares[j] === winningCombos[i][0]) {
-          moveOptions[winningCombos[i][0]] = 
-          (moveOptions[winningCombos[i][0]] + 1) || 1;
+        if (openSquares[j] === opponentWinningMoves[i][0]) {
+          moveOptions[opponentWinningMoves[i][0]] = (moveOptions[opponentWinningMoves[i][0]] + 1) || 1;
         }
-        if (openSquares[j] === winningCombos[i][1]) {
-          moveOptions[winningCombos[i][1]] = 
-          (moveOptions[winningCombos[i][1]] + 1) || 1;
+        if (openSquares[j] === opponentWinningMoves[i][1]) {
+          moveOptions[opponentWinningMoves[i][1]] = (moveOptions[opponentWinningMoves[i][1]] + 1) || 1;
         }
-        if (openSquares[j] === winningCombos[i][2]) {
-          moveOptions[winningCombos[i][2]] = 
-          (moveOptions[winningCombos[i][2]] + 1) || 1;
+        if (openSquares[j] === opponentWinningMoves[i][2]) {
+          moveOptions[opponentWinningMoves[i][2]] = (moveOptions[opponentWinningMoves[i][2]] + 1) || 1;
         }
       }
     }
-    // this one does better on move 3 -only adds 1
+
     for (let i = 0; i < winningCombos.length; i++) {
       for (let j = 0; j < openSquares.length; j++) {
       // this loop adds to the same object above and tells you which available space has the most
@@ -175,34 +175,50 @@ const gamePlayModule = (function () {
         }
       }
     }
-
-    console.table(moveOptions);
-    moveOptions = Object.entries(moveOptions).sort((a,b) => b[1]-a[1]).map(el=>el[0]).slice(0,1);
+    moveOptions = Object.entries(moveOptions).sort((a, b) => b[1] - a[1]).map((el) => el[0]).slice(0, 1);
+    moveOptions = cpuHelper(moveOptions);
     return moveOptions;
+  }
+
+  function cpuHelper(move) {
+    let help = move;
+    // instead of re-doing all of the cpu logic to figure out
+    // the failure at move 3, I just made a helper function
+    // that stops the blunder.
+    if (turnNumber != 3) return help;
+    if ((otherTurn.moves.includes(1) || otherTurn.moves.includes(3))
+      && (otherTurn.moves.includes(8) || otherTurn.moves.includes(9))) help = 4;
+    if ((otherTurn.moves.includes(7) || otherTurn.moves.includes(1))
+      && (otherTurn.moves.includes(6) || otherTurn.moves.includes(3))) help = 8;
+    return help;
   }
   function checkForWinner() {
     for (let i = 0; i < winningCombos.length; i++) {
       // this goes through every winning combo and checks
       // to see if every element is present
-      winner = compareArray(xValues, winningCombos[i]) || compareArray(oValues, winningCombos[i]);
-      if (winner) return true;
-      if (turnNumber === 9) {
-        DomElement.gameOverMsg.textContent = "It's a draw!";
+      winner = compareArray(turn.moves, winningCombos[i]);
+      // winner = compareArray(playerOne.moves, winningCombos[i]) || compareArray(playerTwo.moves, winningCombos[i]);
+      if (winner) return winner;
+      if (turnNumber === 8) {
+        winner = 'Draw';
+        return winner;
       }
     }
   }
   function clearBoard() {
     gameBoard = ['0', '', '', '', '', '', '', '', '', ''];
-    xValues = [];
-    oValues = [];
+    playerOne.moves = [];
+    playerTwo.moves = [];
     winner = false;
     turnNumber = 0;
     turn = playerOne;
+    otherTurn = playerTwo;
     DomElement.gameBtns.forEach((button) => {
       button.textContent = '';
       button.classList.remove('winning');
     });
-    DomElement.gameOverMsg.classList.remove('visible');
+    DomElement.gameOverContainer.classList.remove('visible');
+    DomElement.mainDisplay.classList.remove('blur');
   }
   function cpuToggle() {
     clearBoard();
@@ -218,7 +234,7 @@ const gamePlayModule = (function () {
     clickAction,
     switchMark,
     cpuToggle,
-    clearBoard
+    clearBoard,
   };
 }());
 
@@ -276,19 +292,24 @@ const gameBoardModule = (function () {
 }());
 
 gameBoardModule.displayBoard();
+
 const DomElement = (function () {
   const twoPlayerBtn = document.querySelector('.twoPlayer');
   const aiPlayerBtn = document.querySelector('.aiPlayer');
-  const restartBtn = document.querySelector('.restart');
+  const restartBtns = document.querySelectorAll('.restart');
   const gameBtns = document.querySelectorAll('.gameBtn');
+  const gameOverContainer = document.querySelector('.gameOverContainer');
   const gameOverMsg = document.querySelector('.gameOverMsg');
+  const mainDisplay = document.querySelector('.main');
 
   return {
     twoPlayerBtn,
     aiPlayerBtn,
-    restartBtn,
+    restartBtns,
     gameBtns,
+    gameOverContainer,
     gameOverMsg,
+    mainDisplay,
   };
 }());
 
@@ -298,7 +319,7 @@ DomElement.gameBtns.forEach((button) => button.addEventListener('click', () => {
   gamePlayModule.clickAction(button);
 }));
 
-DomElement.restartBtn.addEventListener('click', gamePlayModule.clearBoard);
+DomElement.restartBtns.forEach((button) => button.addEventListener('click', gamePlayModule.clearBoard));
 
 DomElement.aiPlayerBtn.addEventListener('click', () => {
   gamePlayModule.cpuToggle();
