@@ -40,6 +40,9 @@ const gamePlayModule = (function () {
 
   // Updates display to congratulate winner, or signify a tie
   function gameOver(winner) {
+    DomElement.gameBtns.forEach((button) => {
+      button.disabled = true;
+    });
     DomElement.gameOverContainer.classList.add('visible');
     DomElement.mainDisplay.classList.add('blur');
     if (winner == 'Draw') {
@@ -204,12 +207,12 @@ const gamePlayModule = (function () {
     for (let i = 0; i < winningCombos.length; i++) {
       // this goes through every winning combo and checks
       // to see if every element is present
-      winner = compareArray(turn.moves, winningCombos[i]);
+      winner = compareArray(turn.moves, winningCombos[i]);      
       if (winner) return winner;
-      if (turnNumber === 8) {
-        winner = 'Draw';
-        return winner;
-      }
+    }
+    if (turnNumber === 8) {
+      winner = 'Draw';
+      return winner;
     }
   }
 
@@ -230,6 +233,7 @@ const gamePlayModule = (function () {
     DomElement.gameBtns.forEach((button) => {
       button.textContent = '';
       button.classList.remove('winning');
+      button.disabled = false;
     });
     DomElement.gameOverContainer.classList.remove('visible');
     DomElement.mainDisplay.classList.remove('blur');
