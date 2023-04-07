@@ -1,24 +1,32 @@
-.gameBtn {
-  width: 200px;
-  height: 200px;
-  background-color: white;
-  border: 4px solid gray;
-  font-size: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+html {
+  font-size: 62.5%;
+}
+*{
+  box-sizing: border-box;
+}
+button {
+  margin: 0;
+  padding: 0;
+}
+.main {
+  text-align: center;
 }
 .gameContainer {
-  display: grid;
-  grid-template-rows: repeat(3, 1fr);
-  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  width: 750px;
+  height: 750px;
+  margin: 5% auto;
 }
-.row1,
-.row2,
-.row3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  justify-self: center;
+.gameContainer > div {
+  flex: 1;
+  display: flex;
+}
+.gameBtn {
+  flex: 1;
+  background-color: white;
+  border: 1px solid gray;
+  font-size: 14rem;
 }
 button.top {
   border-top: none;
@@ -32,30 +40,29 @@ button.right {
 button.bot {
   border-bottom: none;
 }
-.gameOverMsg{
-  font-size: 75px;
+.main-btns button {
+  padding: 5px 10px;
+  margin: 5px 10px;
 }
-
-
-
 .winning {
   text-shadow: rgb(227, 255, 69) 0 0 40px;
-  font-size: 220px;
+  font-size: 19rem;
 }
-
 .gameOverContainer {
   display: none;
   background-color: rgba(255, 255, 255, 0.813);
+  border: 2px solid black;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 3.5rem;
   position: fixed;
   top: 20%;
   left: 50%;
+  text-align: center;
   transform: translate(-50%, -50%);
   z-index: 1;
 }
-
 .blur {
-  width:100%;
-  height:100%;
   background-size:cover;
   -webkit-filter: blur(4px);
   -moz-filter: blur(4px);
@@ -63,13 +70,19 @@ button.bot {
   -o-filter: blur(4px);
   filter: blur(4px);
   }
-
-  .main-btns {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
+.visible {
+  display: block;
+}
+@media all and (max-width: 750px) {
+  .gameContainer {
+    width: 350px;
+    height: 350px;
   }
-
-  .visible {
-    display: block;
+  .gameBtn {
+    font-size: 7rem;
   }
+  .gameOverContainer {
+    font-size: 1.5rem;
+    top: 15%;
+  }
+}

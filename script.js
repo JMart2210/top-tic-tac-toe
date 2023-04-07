@@ -5,8 +5,8 @@ const Player = (name, mark) => {
 
 const gamePlayModule = (function () {
   let gameBoard = ['0', '', '', '', '', '', '', '', '', ''];
-  const playerOne = Player('Player One', 'X');
-  const playerTwo = Player('Player Two', 'O');
+  let playerOne = Player('The Hero', 'X');
+  let playerTwo = Player('Player Two', 'O');
   let winner = false;
   let turnNumber = 0;
   let turn = playerOne;
@@ -25,8 +25,9 @@ const gamePlayModule = (function () {
   // This was the start of allowing user to decide X's or O's.
   // but I never implemented that option.
   function switchMark() {
-    clearBoard();
+    DomElement.switchSideBtn.textContent = `Play for the ${playerOne.mark}'s`;
     [playerOne.mark, playerTwo.mark] = [playerTwo.mark, playerOne.mark];
+    clearBoard();    
   }
 
   // compares an array with players moves to an array with winning
@@ -39,6 +40,9 @@ const gamePlayModule = (function () {
 
   // Updates display to congratulate winner, or signify a tie
   function gameOver(winner) {
+    DomElement.gameBtns.forEach((button) => {
+      button.disabled = true;
+    });
     DomElement.gameOverContainer.classList.add('visible');
     DomElement.mainDisplay.classList.add('blur');
     if (winner == 'Draw') {
@@ -56,6 +60,9 @@ const gamePlayModule = (function () {
   function nextTurn() {
     [turn, otherTurn] = [otherTurn, turn];
     turnNumber += 1;
+    if (turn.name === 'cpu') {
+      computerMove();
+    }
   }
 
   // receives move, updates game board and checks if they are a winner
@@ -66,12 +73,6 @@ const gamePlayModule = (function () {
     nextTurn();
     // we want to automatically get next move if the 
     // game is not over and Player two is a cpu.
-    if (playerTwo.name === 'cpu') {
-      cpuChoice = getComputerChoice();
-      updateGameBoard(cpuChoice, turn.mark);
-      if (checkForWinner()) gameOver(winner);
-      nextTurn();
-    }
   }
 
   // this updates the game board array as well as the
@@ -206,13 +207,20 @@ const gamePlayModule = (function () {
     for (let i = 0; i < winningCombos.length; i++) {
       // this goes through every winning combo and checks
       // to see if every element is present
-      winner = compareArray(turn.moves, winningCombos[i]);
+      winner = compareArray(turn.moves, winningCombos[i]);      
       if (winner) return winner;
-      if (turnNumber === 8) {
-        winner = 'Draw';
-        return winner;
-      }
     }
+    if (turnNumber === 8) {
+      winner = 'Draw';
+      return winner;
+    }
+  }
+
+  function computerMove() {
+    cpuChoice = getComputerChoice();
+    updateGameBoard(cpuChoice, turn.mark);
+    if (checkForWinner()) gameOver(winner);
+    nextTurn();
   }
 
   // Resets gameboard and all pertinent fields
@@ -222,19 +230,26 @@ const gamePlayModule = (function () {
     playerTwo.moves = [];
     winner = false;
     turnNumber = 0;
-    turn = playerOne;
-    otherTurn = playerTwo;
     DomElement.gameBtns.forEach((button) => {
       button.textContent = '';
       button.classList.remove('winning');
+      button.disabled = false;
     });
     DomElement.gameOverContainer.classList.remove('visible');
     DomElement.mainDisplay.classList.remove('blur');
+    if (playerOne.mark === 'X') {
+      turn = playerOne;
+      otherTurn = playerTwo;
+    } else {
+      turn = playerTwo;
+      otherTurn = playerOne;
+      
+      if (turn.name === 'cpu') computerMove();
+    }
   }
 
   // updates playerTwo to cpu.
   function cpuToggle() {
-    clearBoard();
     if (playerTwo.name == 'cpu') {
       playerTwo.name = 'Player Two';
       DomElement.aiPlayerBtn.textContent = 'Play against CPU';
@@ -242,6 +257,7 @@ const gamePlayModule = (function () {
       playerTwo.name = 'cpu';
       DomElement.aiPlayerBtn.textContent = 'Two Players';
     }
+    clearBoard();
   }
   return {
     clickAction,
@@ -317,6 +333,7 @@ const DomElement = (function () {
   const gameOverContainer = document.querySelector('.gameOverContainer');
   const gameOverMsg = document.querySelector('.gameOverMsg');
   const mainDisplay = document.querySelector('.main');
+  const switchSideBtn = document.querySelector('.switch');
 
   return {
     twoPlayerBtn,
@@ -326,6 +343,7 @@ const DomElement = (function () {
     gameOverContainer,
     gameOverMsg,
     mainDisplay,
+    switchSideBtn,
   };
 }());
 
@@ -335,8 +353,14 @@ DomElement.gameBtns.forEach((button) => button.addEventListener('click', () => {
   gamePlayModule.clickAction(button);
 }));
 
-DomElement.restartBtns.forEach((button) => button.addEventListener('click', gamePlayModule.clearBoard));
+DomElement.restartBtns.forEach((button) => button.addEventListener('click', () => {
+  gamePlayModule.clearBoard();  
+}));
 
 DomElement.aiPlayerBtn.addEventListener('click', () => {
   gamePlayModule.cpuToggle();
+});
+
+DomElement.switchSideBtn.addEventListener('click', () => {
+  gamePlayModule.switchMark();
 });
